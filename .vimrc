@@ -14,6 +14,7 @@ Plugin 'gorodinskiy/vim-coloresque'
 Plugin 'lervag/vimtex'
 Plugin 'chrisbra/Colorizer'
 Plugin 'ycm-core/YouCompleteMe'
+Plugin 'udalov/kotlin-vim'
 
 call vundle#end()            " required
 filetype plugin indent on    " required
@@ -41,18 +42,20 @@ let g:airline#extensions#tabline#show_close_button = 0
 let g:airline#extensions#tabline#exclude_preview = 1
 let g:airline#extensions#whitespace#enabled = 0
 let g:airline#parts#ffenc#skip_expected_string = 'utf-8[unix]'
-let g:airline_theme='simple'
+let g:airline_theme='onedark'
 
 "--------------------------------------------------------------------
 "                        regular vim conf
 "--------------------------------------------------------------------
 syntax on
+let g:load_doxygen_syntax=1
 " show whitespaces
 set listchars=eol:¬,tab:>·,trail:~,extends:>,precedes:<,space:␣
 nnoremap <F5> :set list!<CR>
 inoremap <F5> <C-o>:set list!<CR>
 cnoremap <F5> <C-c>:set list!<CR>
 
+let mapleader=" "
 set noerrorbells
 set smartindent
 set nowrap
@@ -60,13 +63,11 @@ set smartcase
 set noswapfile
 set nobackup
 set undodir=~/.vim/undodir
-set undofile
+set incsearch
+set number
 " tab conf
 set tabstop=4 shiftwidth=4
 set expandtab
-set number
-set incsearch
-let mapleader=" "
 
 noremap <leader>h :wincmd h<CR>
 noremap <leader>j :wincmd j<CR>
@@ -74,13 +75,14 @@ noremap <leader>k :wincmd k<CR>
 noremap <leader>l :wincmd l<CR>
 noremap <leader>gd :ALEGoToDefinition<CR>
 
+" clang-format integration
+map <C-K> :py3f /usr/share/vim/addons/syntax/clang-format.py<cr>
+imap <C-K> <c-o>:py3f /usr/share/vim/addons/syntax/clang-format.py<cr>
+
 "--------------------------------------------------------------------
 "                        GVim conf
 "--------------------------------------------------------------------
 
-"--------------------------------------------------------------------
-"                        colors
-"--------------------------------------------------------------------
 
 " https://upload.wikimedia.org/wikipedia/commons/1/15/Xterm_256color_chart.svg
 " YCM little '>>' on the line number
@@ -91,3 +93,38 @@ hi SpellBad term=reverse ctermfg=251 ctermbg=088
 hi Visual term=reverse ctermfg=016
 " Popup menu
 hi Pmenu term=reverse ctermfg=251 ctermbg=236
+" fold colors
+hi Folded ctermbg=black
+
+"--------------------------------------------------------------------
+"                        Encription
+"--------------------------------------------------------------------
+" Transparent editing of gpg encrypted files.
+" By Wouter Hanegraaff
+augroup encrypted
+  au!
+
+  " First make sure nothing is written to ~/.viminfo while editing
+  " an encrypted file.
+  autocmd BufReadPre,FileReadPre *.gpg set viminfo=
+  " We don't want a swap file, as it writes unencrypted data to disk
+  autocmd BufReadPre,FileReadPre *.gpg set noswapfile
+
+  " Switch to binary mode to read the encrypted file
+  autocmd BufReadPre,FileReadPre *.gpg set bin
+  autocmd BufReadPre,FileReadPre *.gpg let ch_save = &ch|set ch=2
+  " (If you use tcsh, you may need to alter this line.)
+  autocmd BufReadPost,FileReadPost *.gpg '[,']!gpg --decrypt 2> /dev/null
+
+  " Switch to normal mode for editing
+  autocmd BufReadPost,FileReadPost *.gpg set nobin
+  autocmd BufReadPost,FileReadPost *.gpg let &ch = ch_save|unlet ch_save
+  autocmd BufReadPost,FileReadPost *.gpg execute ":doautocmd BufReadPost " . expand("%:r")
+
+  " Convert all text to encrypted text before writing
+  " (If you use tcsh, you may need to alter this line.)
+  autocmd BufWritePre,FileWritePre *.gpg '[,']!gpg --default-recipient-self -ae 2>/dev/null
+  " Undo the encryption so we are back in the normal text, directly
+  " after the file has been written.
+  autocmd BufWritePost,FileWritePost *.gpg u
+augroup END
