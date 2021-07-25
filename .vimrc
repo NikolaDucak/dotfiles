@@ -1,3 +1,5 @@
+scriptencoding utf-8
+
 set nocompatible              " be iMproved, required
 filetype off                  " required set exrc
 set secure
@@ -8,6 +10,7 @@ call vundle#begin()
 
 Plugin 'VundleVim/Vundle.vim' "required
 Plugin 'scrooloose/nerdtree'
+Plugin 'Xuyuanp/nerdtree-git-plugin'
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
 Plugin 'gorodinskiy/vim-coloresque'
@@ -15,6 +18,8 @@ Plugin 'lervag/vimtex'
 Plugin 'chrisbra/Colorizer'
 Plugin 'ycm-core/YouCompleteMe'
 Plugin 'udalov/kotlin-vim'
+Plugin 'ctrlpvim/ctrlp.vim'
+Plugin 'tpope/vim-fugitive'
 
 call vundle#end()            " required
 filetype plugin indent on    " required
@@ -27,11 +32,14 @@ filetype plugin indent on    " required
 let g:ycm_global_ycm_extra_conf = '/home/nik/.vim/bundle/YouCompleteMe/third_party/ycmd/.ycm_extra_conf.py'
 let g:ycm_autoclose_preview_window_after_insertion = 1
 let g:ycm_autoclose_preview_window_after_completion = 1
+let g:ycm_always_populate_location_list = 1
 
 
 " NerdTree conf
 let g:netrw_banner=0
 map <C-n> :NERDTreeToggle<CR>
+:let g:NERDTreeWinSize=50
+
 
 " airline conf
 let g:airline#extensions#tabline#show_buffers = 0
@@ -83,7 +91,6 @@ imap <C-K> <c-o>:py3f /usr/share/vim/addons/syntax/clang-format.py<cr>
 "                        GVim conf
 "--------------------------------------------------------------------
 
-
 " https://upload.wikimedia.org/wikipedia/commons/1/15/Xterm_256color_chart.svg
 " YCM little '>>' on the line number
 hi Error term=reverse ctermfg=251 ctermbg=088
@@ -95,36 +102,3 @@ hi Visual term=reverse ctermfg=016
 hi Pmenu term=reverse ctermfg=251 ctermbg=236
 " fold colors
 hi Folded ctermbg=black
-
-"--------------------------------------------------------------------
-"                        Encription
-"--------------------------------------------------------------------
-" Transparent editing of gpg encrypted files.
-" By Wouter Hanegraaff
-augroup encrypted
-  au!
-
-  " First make sure nothing is written to ~/.viminfo while editing
-  " an encrypted file.
-  autocmd BufReadPre,FileReadPre *.gpg set viminfo=
-  " We don't want a swap file, as it writes unencrypted data to disk
-  autocmd BufReadPre,FileReadPre *.gpg set noswapfile
-
-  " Switch to binary mode to read the encrypted file
-  autocmd BufReadPre,FileReadPre *.gpg set bin
-  autocmd BufReadPre,FileReadPre *.gpg let ch_save = &ch|set ch=2
-  " (If you use tcsh, you may need to alter this line.)
-  autocmd BufReadPost,FileReadPost *.gpg '[,']!gpg --decrypt 2> /dev/null
-
-  " Switch to normal mode for editing
-  autocmd BufReadPost,FileReadPost *.gpg set nobin
-  autocmd BufReadPost,FileReadPost *.gpg let &ch = ch_save|unlet ch_save
-  autocmd BufReadPost,FileReadPost *.gpg execute ":doautocmd BufReadPost " . expand("%:r")
-
-  " Convert all text to encrypted text before writing
-  " (If you use tcsh, you may need to alter this line.)
-  autocmd BufWritePre,FileWritePre *.gpg '[,']!gpg --default-recipient-self -ae 2>/dev/null
-  " Undo the encryption so we are back in the normal text, directly
-  " after the file has been written.
-  autocmd BufWritePost,FileWritePost *.gpg u
-augroup END
